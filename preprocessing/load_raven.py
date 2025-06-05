@@ -454,7 +454,7 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
     
     def query_azure_openai(self, prompt: str, image: Image.Image) -> str:
         """
-        Send visual prompt to LLM with retry logic using LiteLLM.
+        Send visual prompt to LLM with retry logic using LiteLLM or native AzureOpenAI client.
         
         Args:
             prompt: Text prompt describing the task
@@ -498,57 +498,81 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
         # Retry logic with exponential backoff
         for attempt in range(self.max_retries):
             try:
-                # Prepare completion parameters
                 # For Azure models, we need to strip the "azure/" prefix when setting the model parameter
                 model_param = self.model_name
                 if self.model_name.startswith("azure/"):
                     model_param = self.model_name[len("azure/"):]
                 
-                completion_params = {
-                    "model": model_param,
-                    "messages": messages,
-                    "max_tokens": 10,  # Increased from 10 to allow proper responses
-                }
-                
-                # Azure OpenAI support
-                if self.model_name.startswith("azure/"):
-                    completion_params["api_key"] = os.getenv("AZURE_API_KEY")
-                    completion_params["api_base"] = os.getenv("AZURE_API_BASE", "https://dalle-declare.openai.azure.com/")
-                    completion_params["api_version"] = os.getenv("AZURE_API_VERSION", "2025-01-01-preview")
-                
-                # Set up Vertex AI credentials if using vertex_ai models
-                if self.model_name.startswith("vertex_ai/"):
-                    completion_params["vertex_project"] = os.getenv("ANTHROPIC_PROJECT_ID", "your-project-id")
-                    completion_params["vertex_location"] = os.getenv("ANTHROPIC_REGION", "us-east5")
-                
-                # Add thinking configuration for Claude models
-                if "claude" in self.model_name.lower() and "3-7" in self.model_name:
-                    thinking_budgets = {
-                        "low": 1024,
-                        "medium": 4096,
-                        "high": 16000
-                    }
-                    completion_params["thinking"] = {
-                        "type": "enabled",
-                        "budget_tokens": thinking_budgets.get(self.reasoning_effort, 16000)
-                    }
-                    completion_params["temperature"] = 1.0
-                elif self.reasoning_effort and self.reasoning_effort.lower() in ["low", "medium", "high"]:
-                    if not self.model_name.startswith("azure/"):
-                        completion_params["reasoning_effort"] = self.reasoning_effort.lower()
-                    completion_params["temperature"] = 1.0
+                # Use native AzureOpenAI client for o4 models
+                if model_param.startswith("o4"):
+                    from openai import AzureOpenAI
+                    
+                    endpoint = os.getenv("AZURE_API_BASE", "https://dalle-declare.openai.azure.com/")
+                    api_version = os.getenv("AZURE_API_VERSION", "2025-01-01-preview")
+                    
+                    client = AzureOpenAI(
+                        api_version=api_version,
+                        azure_endpoint=endpoint,
+                        api_key=os.getenv("AZURE_API_KEY"),
+                    )
+                    
+                    response = client.chat.completions.create(
+                        messages=messages,
+                        max_completion_tokens=1000,
+                        model="o4-mini",
+                        temperature=0.1 if not self.reasoning_effort else 1.0
+                    )
+                    
+                    response_content = response.choices[0].message.content
+                    response_text = response_content.strip() if response_content else ""
+                    
                 else:
-                    completion_params["temperature"] = 0.1
-                
-                # Call the LLM
-                response = litellm.completion(**completion_params)
-                
-                # Check if response is valid
-                if not response or not response.choices or len(response.choices) == 0:
-                    raise Exception("Empty response from API")
-                
-                response_content = response.choices[0].message.content
-                response_text = response_content.strip() if response_content else ""
+                    # Use LiteLLM for other models
+                    completion_params = {
+                        "model": model_param,
+                        "messages": messages,
+                        "max_tokens": 10,  # Increased from 10 to allow proper responses
+                    }
+                    
+                    # Azure OpenAI support
+                    if self.model_name.startswith("azure/"):
+                        completion_params["api_key"] = os.getenv("AZURE_API_KEY")
+                        completion_params["api_base"] = os.getenv("AZURE_API_BASE", "https://dalle-declare.openai.azure.com/")
+                        completion_params["api_version"] = os.getenv("AZURE_API_VERSION", "2025-01-01-preview")
+                    
+                    # Set up Vertex AI credentials if using vertex_ai models
+                    if self.model_name.startswith("vertex_ai/"):
+                        completion_params["vertex_project"] = os.getenv("ANTHROPIC_PROJECT_ID", "your-project-id")
+                        completion_params["vertex_location"] = os.getenv("ANTHROPIC_REGION", "us-east5")
+                    
+                    # Add thinking configuration for Claude models
+                    if "claude" in self.model_name.lower() and "3-7" in self.model_name:
+                        thinking_budgets = {
+                            "low": 1024,
+                            "medium": 4096,
+                            "high": 16000
+                        }
+                        completion_params["thinking"] = {
+                            "type": "enabled",
+                            "budget_tokens": thinking_budgets.get(self.reasoning_effort, 16000)
+                        }
+                        completion_params["temperature"] = 1.0
+                    elif self.reasoning_effort and self.reasoning_effort.lower() in ["low", "medium", "high"]:
+                        if not self.model_name.startswith("azure/"):
+                            completion_params["reasoning_effort"] = self.reasoning_effort.lower()
+                        completion_params["temperature"] = 1.0
+                    else:
+                        completion_params["temperature"] = 0.1
+                    
+                    # Call the LLM
+                    response = litellm.completion(**completion_params)
+                    
+                    # Check if response is valid
+                    if not response or not response.choices or len(response.choices) == 0:
+                        raise Exception("Empty response from API")
+                    
+                    response_content = response.choices[0].message.content
+                    response_text = response_content.strip() if response_content else ""
                 
                 # Log the response
                 llm_logger.info(f"RESPONSE: {response_text}")
