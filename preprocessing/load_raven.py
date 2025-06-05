@@ -446,7 +446,7 @@ class RAVENRunner:
         # Combine both images into a single image
         combined_image = self.create_combined_image(matrix_composite, choices_composite)
         
-        prompt = """You are shown a 3x3 matrix of images with the bottom-right panel missing (marked with "?"). Your task is to identify which of the 8 numbered choices (1-8) best completes the pattern.
+        prompt = """You are shown a 3x3 Problem Matrix of images with the bottom-right panel missing (marked with "?"). Your task is to identify which of the 8 numbered choices (1-8) in the Answer Set best completes the pattern.
 
 Select the choice (1-8) that best completes the pattern. Respond with only the number (1, 2, 3, 4, 5, 6, 7, or 8)."""
         
@@ -481,30 +481,29 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
         llm_logger.info(f"MODEL: {self.model_name}, REASONING: {self.reasoning_effort}")
         
         # Create cache key from prompt and model
-        cache_key = f"{self.model_name}:{str(prompt)}"
+        # cache_key = f"{self.model_name}:{str(prompt)}"
         
         # Check cache
-        cache = {}
-        if os.path.exists(cache_file):
-            try:
-                with open(cache_file, 'r') as f:
-                    cache = json.load(f)
-                if cache_key in cache:
-                    llm_logger.info(f"Cache hit for prompt: {str(prompt)[:50]}...")
-                    return cache[cache_key]
-            except:
-                llm_logger.warning(f"Failed to load cache, starting with empty cache")
+        # cache = {}
+        # if os.path.exists(cache_file):
+        #     try:
+        #         with open(cache_file, 'r') as f:
+        #             cache = json.load(f)
+        #         if cache_key in cache:
+        #             llm_logger.info(f"Cache hit for prompt: {str(prompt)[:50]}...")
+        #             return cache[cache_key]
+        #     except:
+        #         llm_logger.warning(f"Failed to load cache, starting with empty cache")
         
         # Retry logic with exponential backoff
         for attempt in range(self.max_retries):
             try:
                 # For Azure models, we need to strip the "azure/" prefix when setting the model parameter
                 model_param = self.model_name
-                if self.model_name.startswith("azure/"):
-                    model_param = self.model_name[len("azure/"):]
                 
                 # Use native AzureOpenAI client for o4 models
-                if model_param.startswith("o4"):
+                if "azure/o4" in model_param:
+                    print("Using AzureOpenAI client for o4 models")
                     from openai import AzureOpenAI
                     
                     endpoint = os.getenv("AZURE_API_BASE", "https://dalle-declare.openai.azure.com/")
@@ -585,13 +584,13 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
                         continue
                 
                 # Update cache
-                cache[cache_key] = response_text
-                try:
-                    with open(cache_file, 'w') as f:
-                        json.dump(cache, f, indent=2)
-                    llm_logger.info(f"Added to cache")
-                except Exception as e:
-                    llm_logger.error(f"Failed to save cache: {e}")
+                # cache[cache_key] = response_text
+                # try:
+                #     with open(cache_file, 'w') as f:
+                #         json.dump(cache, f, indent=2)
+                #     llm_logger.info(f"Added to cache")
+                # except Exception as e:
+                #     llm_logger.error(f"Failed to save cache: {e}")
                 
                 return response_text
                 

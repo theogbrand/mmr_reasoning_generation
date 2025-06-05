@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "split": "validation",
+    "total_samples": 20,
+    "model": "azure/gpt-4.1",
+    "timestamp": "2025-06-05 13:55:16"
+  },
+  "metrics": {
+    "accuracy": 0.05,
+    "correct": 1,
+    "total": 20,
+    "invalid_responses": 0,
+    "valid_accuracy": 0.05
+  },
+  "detailed_results": [
+    {
+      "sample_id": 5047,
+      "predicted": 0,
+      "target": 4,
+      "correct": false,
+      "response_text": "1",
+      "split": "validation"
+    },
+    {
+      "sample_id": 9356,
+      "predicted": 2,
+      "target": 7,
+      "correct": false,
+      "response_text": "3",
+      "split": "validation"
+    },
+    {
+      "sample_id": 977,
+      "predicted": 1,
+      "target": 6,
+      "correct": false,
+      "response_text": "2",
+      "split": "validation"
+    },
+    {
+      "sample_id": 5836,
+      "predicted": 7,
+      "target": 0,
+      "correct": false,
+      "response_text": "8",
+      "split": "validation"
+    },
+    {
+      "sample_id": 106,
+      "predicted": 0,
+      "target": 1,
+      "correct": false,
+      "response_text": "1",
+      "split": "validation"
+    },
+    {
+      "sample_id": 2337,
+      "predicted": 1,
+      "target": 4,
+      "correct": false,
+      "response_text": "2",
+      "split": "validation"
+    },
+    {
+      "sample_id": 6097,
+      "predicted": 6,
+      "target": 2,
+      "correct": false,
+      "response_text": "7",
+      "split": "validation"
+    },
+    {
+      "sample_id": 4566,
+      "predicted": 5,
+      "target": 2,
+      "correct": false,
+      "response_text": "6",
+      "split": "validation"
+    },
+    {
+      "sample_id": 8677,
+      "predicted": 5,
+      "target": 2,
+      "correct": false,
+      "response_text": "6",
+      "split": "validation"
+    },
+    {
+      "sample_id": 3616,
+      "predicted": 2,
+      "target": 1,
+      "correct": false,
+      "response_text": "3",
+      "split": "validation"
+    },
+    {
+      "sample_id": 987,
+      "predicted": 7,
+      "target": 3,
+      "correct": false,
+      "response_text": "8",
+      "split": "validation"
+    },
+    {
+      "sample_id": 6816,
+      "predicted": 0,
+      "target": 6,
+      "correct": false,
+      "response_text": "1",
+      "split": "validation"
+    },
+    {
+      "sample_id": 1317,
+      "predicted": 2,
+      "target": 4,
+      "correct": false,
+      "response_text": "3",
+      "split": "validation"
+    },
+    {
+      "sample_id": 6067,
+      "predicted": 1,
+      "target": 1,
+      "correct": true,
+      "response_text": "2",
+      "split": "validation"
+    },
+    {
+      "sample_id": 8687,
+      "predicted": 4,
+      "target": 0,
+      "correct": false,
+      "response_text": "5",
+      "split": "validation"
+    },
+    {
+      "sample_id": 4596,
+      "predicted": 6,
+      "target": 4,
+      "correct": false,
+      "response_text": "7",
+      "split": "validation"
+    },
+    {
+      "sample_id": 7546,
+      "predicted": 6,
+      "target": 2,
+      "correct": false,
+      "response_text": "7",
+      "split": "validation"
+    },
+    {
+      "sample_id": 6686,
+      "predicted": 2,
+      "target": 6,
+      "correct": false,
+      "response_text": "3",
+      "split": "validation"
+    },
+    {
+      "sample_id": 717,
+      "predicted": 7,
+      "target": 2,
+      "correct": false,
+      "response_text": "8",
+      "split": "validation"
+    },
+    {
+      "sample_id": 2526,
+      "predicted": 0,
+      "target": 6,
+      "correct": false,
+      "response_text": "1",
+      "split": "validation"
+    }
+  ]
+}
