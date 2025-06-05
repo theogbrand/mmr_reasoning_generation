@@ -137,7 +137,10 @@ class RAVENRunner:
         cell_width = panel_width + 2 * border_width
         cell_height = panel_height + 2 * border_width
         
-        composite_width = cell_width * 3 + spacing * 2
+        # Add margin for the "Problem Matrix" text on the left side
+        left_margin = 40  # Margin for the vertical text
+        
+        composite_width = cell_width * 3 + spacing * 2 + left_margin
         composite_height = cell_height * 3 + spacing * 2
         
         # Create composite image with white background
@@ -160,8 +163,8 @@ class RAVENRunner:
         ]
         
         for i, (col, row) in enumerate(positions):
-            # Calculate position with spacing
-            x = col * (cell_width + spacing)
+            # Calculate position with spacing, accounting for left margin
+            x = left_margin + col * (cell_width + spacing)
             y = row * (cell_height + spacing)
             
             # Draw border rectangle
@@ -175,7 +178,7 @@ class RAVENRunner:
         
         # Add question mark for missing panel
         missing_col, missing_row = 2, 2
-        missing_x = missing_col * (cell_width + spacing)
+        missing_x = left_margin + missing_col * (cell_width + spacing)
         missing_y = missing_row * (cell_height + spacing)
         
         # Draw border for missing panel
@@ -204,6 +207,37 @@ class RAVENRunner:
         text_y = missing_y + (cell_height - text_height) // 2
         
         draw.text((text_x, text_y), question_text, fill='black', font=font)
+        
+        # Add "Problem Matrix" text on the left side
+        try:
+            label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
+        except:
+            try:
+                label_font = ImageFont.load_default()
+            except:
+                label_font = None
+        
+        if label_font:
+            problem_matrix_text = "Problem Matrix"
+            text_width, text_height = draw.textbbox((0, 0), problem_matrix_text, font=label_font)[2:4]
+            
+            # Calculate the position for the vertical text
+            # Center it vertically in the matrix area
+            matrix_height = 3 * cell_height + 2 * spacing
+            text_x = 15  # Fixed distance from the left edge
+            text_y = (composite_height - text_width) // 2  # Center vertically
+            
+            # Draw the rotated text
+            # We need to create a temporary image, draw text, then rotate and paste
+            text_img = Image.new('RGBA', (text_width, text_height), (255, 255, 255, 0))
+            text_draw = ImageDraw.Draw(text_img)
+            text_draw.text((0, 0), problem_matrix_text, fill='black', font=label_font)
+            
+            # Rotate the text image 90 degrees counter-clockwise
+            rotated_text = text_img.rotate(90, expand=True)
+            
+            # Paste the rotated text onto the composite image
+            composite.paste(rotated_text, (text_x, text_y), rotated_text)
         
         return composite
 
@@ -306,25 +340,27 @@ class RAVENRunner:
         
         # Layout parameters
         margin = 30  # Margin around the entire image
-        left_label_width = 80  # Extra space for vertical labels on the left
         section_spacing = 40  # Space between Problem Matrix and Answer Set
-        label_height = 35  # Height for section labels
-        label_margin = 10  # Space between label and content
+        label_height = 40  # Height for section labels (increased)
+        label_margin = 15  # Space between label and content (increased)
+        
+        # Add margin for the left side labels
+        left_margin = 40  # Margin for the vertical text
         
         # Calculate total dimensions
-        combined_width = max(matrix_width, choices_width) + 2 * margin + left_label_width
+        combined_width = max(matrix_width, choices_width) + 2 * margin + left_margin
         combined_height = (margin + label_height + label_margin + matrix_height + 
-                          section_spacing + label_margin + 
+                          section_spacing + label_height + label_margin + 
                           choices_height + margin)
         
         # Create combined image with white background
         combined = Image.new('RGB', (combined_width, combined_height), 'white')
         draw = ImageDraw.Draw(combined)
         
-        # Set up fonts
+        # Set up fonts - using bold font for both
         try:
             title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
-            label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+            label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
         except:
             try:
                 title_font = ImageFont.load_default()
@@ -338,60 +374,39 @@ class RAVENRunner:
         
         # Add "(a)" label at top left
         if title_font:
-            draw.text((margin + left_label_width, current_y), "(a)", fill='black', font=title_font)
+            draw.text((margin, current_y), "(a)", fill='black', font=title_font)
         current_y += label_height + label_margin
         
-        # Add "Problem Matrix" label on the left side (rotated 90 degrees)
-        if label_font:
-            problem_label = "Problem Matrix"
-            # Create a temporary image for the rotated text
-            bbox = draw.textbbox((0, 0), problem_label, font=label_font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
-            
-            # Create temporary image for text
-            text_img = Image.new('RGB', (text_width, text_height), 'white')
-            text_draw = ImageDraw.Draw(text_img)
-            text_draw.text((0, 0), problem_label, fill='black', font=label_font)
-            
-            # Rotate the text image 90 degrees counter-clockwise
-            rotated_text = text_img.rotate(90, expand=True)
-            
-            # Position the rotated text on the left side, centered vertically with matrix
-            label_x = margin + (left_label_width - rotated_text.size[0]) // 2
-            label_y = current_y + (matrix_height - rotated_text.size[1]) // 2
-            combined.paste(rotated_text, (label_x, label_y))
+        # We don't need to add "Problem Matrix" label here since it's now part of the matrix_composite
         
-        # Center and paste the matrix (accounting for left label space)
-        matrix_x = margin + left_label_width + (combined_width - matrix_width - margin - left_label_width) // 2
+        # Center and paste the matrix
+        matrix_x = margin + (combined_width - matrix_width - 2*margin) // 2
         combined.paste(matrix_composite, (matrix_x, current_y))
         current_y += matrix_height + section_spacing
         
-        # Add "Answer Set" label on the left side (rotated 90 degrees)
+        # Add "Answer Set" label - positioned on the left side vertically
         if label_font:
-            answer_label = "Answer Set"
+            answer_set_label = "Answer Set"
             # Create a temporary image for the rotated text
-            bbox = draw.textbbox((0, 0), answer_label, font=label_font)
+            bbox = draw.textbbox((0, 0), answer_set_label, font=label_font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
             
-            # Create temporary image for text
-            text_img = Image.new('RGB', (text_width, text_height), 'white')
+            # Create temporary image for text with transparent background
+            text_img = Image.new('RGBA', (text_width, text_height), (255, 255, 255, 0))
             text_draw = ImageDraw.Draw(text_img)
-            text_draw.text((0, 0), answer_label, fill='black', font=label_font)
+            text_draw.text((0, 0), answer_set_label, fill='black', font=label_font)
             
             # Rotate the text image 90 degrees counter-clockwise
             rotated_text = text_img.rotate(90, expand=True)
             
-            # Position the rotated text on the left side, centered vertically with choices
-            label_x = margin + (left_label_width - rotated_text.size[0]) // 2
+            # Position the rotated text on the left side, centered vertically with choices grid
+            label_x = 15
             label_y = current_y + (choices_height - rotated_text.size[1]) // 2
-            combined.paste(rotated_text, (label_x, label_y))
+            combined.paste(rotated_text, (label_x, label_y), rotated_text)
         
-        current_y += label_margin
-        
-        # Center and paste the choices (accounting for left label space)
-        choices_x = margin + left_label_width + (combined_width - choices_width - margin - left_label_width) // 2
+        # Center and paste the choices
+        choices_x = margin + (combined_width - choices_width - 2*margin) // 2
         combined.paste(choices_composite, (choices_x, current_y))
         
         return combined
