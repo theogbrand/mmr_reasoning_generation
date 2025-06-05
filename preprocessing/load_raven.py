@@ -210,20 +210,32 @@ class RAVENRunner:
     @staticmethod
     def create_choices_grid(choices: List[Image.Image]) -> Image.Image:
         """
-        Create a grid showing the 8 answer choices with index labels.
+        Create a grid showing the 8 answer choices with index labels below each choice,
+        matching the reference style with 2 rows of 4 choices each.
         
         Args:
             choices: List of 8 PIL images representing answer choices
             
         Returns:
-            PIL Image showing choices arranged in a 2x4 or 4x2 grid with labels
+            PIL Image showing choices arranged in 2x4 grid with labels below
         """
         choice_width, choice_height = choices[0].size
         
-        # Create 2x4 grid for choices
+        # Grid configuration: 2 rows, 4 columns
         grid_cols, grid_rows = 4, 2
-        composite_width = choice_width * grid_cols
-        composite_height = choice_height * grid_rows + 40  # Extra space for labels
+        
+        # Add border width and spacing
+        border_width = 2
+        spacing = 4
+        label_height = 30  # Space for number labels below choices
+        
+        # Calculate cell dimensions
+        cell_width = choice_width + 2 * border_width
+        cell_height = choice_height + 2 * border_width + label_height
+        
+        # Calculate total dimensions
+        composite_width = cell_width * grid_cols + spacing * (grid_cols - 1)
+        composite_height = cell_height * grid_rows + spacing * (grid_rows - 1)
         
         composite = Image.new('RGB', (composite_width, composite_height), 'white')
         
@@ -231,7 +243,7 @@ class RAVENRunner:
         draw = ImageDraw.Draw(composite)
         
         try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
         except:
             try:
                 font = ImageFont.load_default()
@@ -242,66 +254,126 @@ class RAVENRunner:
             col = i % grid_cols
             row = i // grid_cols
             
-            x = col * choice_width
-            y = row * choice_height + 20  # Offset for label space
+            # Calculate position with spacing
+            x = col * (cell_width + spacing)
+            y = row * (cell_height + spacing)
             
-            # Paste the choice image
-            composite.paste(choice, (x, y))
+            # Draw border rectangle around choice
+            choice_border_height = choice_height + 2 * border_width
+            draw.rectangle([x, y, x + cell_width, y + choice_border_height], 
+                          outline='black', fill='white', width=border_width)
             
-            # Add index label above the choice
+            # Paste the choice image inside the border
+            choice_x = x + border_width
+            choice_y = y + border_width
+            composite.paste(choice, (choice_x, choice_y))
+            
+            # Add index label below the choice
             label = str(i + 1)  # 1-indexed for display
             if font:
                 bbox = draw.textbbox((0, 0), label, font=font)
                 text_width = bbox[2] - bbox[0]
+                text_height = bbox[3] - bbox[1]
             else:
-                text_width = 10
+                text_width, text_height = 10, 12
             
-            label_x = x + (choice_width - text_width) // 2
-            label_y = y - 25
+            # Center the label below the choice
+            label_x = x + (cell_width - text_width) // 2
+            label_y = y + choice_border_height + (label_height - text_height) // 2
             
             draw.text((label_x, label_y), label, fill='black', font=font)
-            
-            # Draw border around choice
-            draw.rectangle([x, y, x + choice_width, y + choice_height], 
-                          outline='gray', width=2)
         
         return composite
 
     @staticmethod
     def create_combined_image(matrix_composite: Image.Image, choices_composite: Image.Image) -> Image.Image:
         """
-        Combine matrix composite and choices composite into a single vertical image.
+        Combine matrix composite and choices composite into a single image matching
+        the reference layout with section labels and proper spacing.
         
         Args:
             matrix_composite: PIL Image showing the 3x3 matrix
             choices_composite: PIL Image showing the 8 choices
             
         Returns:
-            PIL Image with matrix on top and choices below, separated by padding
+            PIL Image with labeled sections: Problem Matrix and Answer Set
         """
-        # Add padding between matrix and choices
-        padding = 20
+        from PIL import ImageDraw, ImageFont
         
-        # Calculate dimensions for combined image
+        # Calculate dimensions
         matrix_width, matrix_height = matrix_composite.size
         choices_width, choices_height = choices_composite.size
         
-        # Use the maximum width to center both images
-        combined_width = max(matrix_width, choices_width)
-        combined_height = matrix_height + choices_height + padding
+        # Layout parameters
+        margin = 30  # Margin around the entire image
+        section_spacing = 40  # Space between Problem Matrix and Answer Set
+        label_height = 35  # Height for section labels
+        label_margin = 10  # Space between label and content
+        
+        # Calculate total dimensions
+        combined_width = max(matrix_width, choices_width) + 2 * margin
+        combined_height = (margin + label_height + label_margin + matrix_height + 
+                          section_spacing + label_height + label_margin + 
+                          choices_height + margin)
         
         # Create combined image with white background
         combined = Image.new('RGB', (combined_width, combined_height), 'white')
+        draw = ImageDraw.Draw(combined)
         
-        # Calculate positions to center both images horizontally
+        # Set up fonts
+        try:
+            title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
+            label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+        except:
+            try:
+                title_font = ImageFont.load_default()
+                label_font = ImageFont.load_default()
+            except:
+                title_font = None
+                label_font = None
+        
+        # Current y position
+        current_y = margin
+        
+        # Add "(a)" label at top left
+        if title_font:
+            draw.text((margin, current_y), "(a)", fill='black', font=title_font)
+        current_y += label_height + label_margin
+        
+        # Add "Problem Matrix" label on the left side (rotated 90 degrees)
+        if label_font:
+            problem_label = "Problem Matrix"
+            # Create a temporary image for the rotated text
+            bbox = draw.textbbox((0, 0), problem_label, font=label_font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            
+            # Create temporary image for text
+            text_img = Image.new('RGB', (text_width, text_height), 'white')
+            text_draw = ImageDraw.Draw(text_img)
+            text_draw.text((0, 0), problem_label, fill='black', font=label_font)
+            
+            # Rotate the text image 90 degrees counter-clockwise
+            rotated_text = text_img.rotate(90, expand=True)
+            
+            # Position the rotated text on the left side, centered vertically with matrix
+            label_x = 5
+            label_y = current_y + (matrix_height - rotated_text.size[1]) // 2
+            combined.paste(rotated_text, (label_x, label_y))
+        
+        # Center and paste the matrix
         matrix_x = (combined_width - matrix_width) // 2
+        combined.paste(matrix_composite, (matrix_x, current_y))
+        current_y += matrix_height + section_spacing
+        
+        # Add "Answer Set" label
+        if label_font:
+            draw.text((margin, current_y), "Answer Set", fill='black', font=label_font)
+        current_y += label_height + label_margin
+        
+        # Center and paste the choices
         choices_x = (combined_width - choices_width) // 2
-        
-        # Paste matrix at top
-        combined.paste(matrix_composite, (matrix_x, 0))
-        
-        # Paste choices below matrix with padding
-        combined.paste(choices_composite, (choices_x, matrix_height + padding))
+        combined.paste(choices_composite, (choices_x, current_y))
         
         return combined
 
