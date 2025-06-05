@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "split": "validation",
+    "total_samples": 5,
+    "model": "azure/o4-mini",
+    "timestamp": "2025-06-05 11:21:20"
+  },
+  "metrics": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 5,
+    "invalid_responses": 5,
+    "valid_accuracy": 0
+  },
+  "detailed_results": [
+    {
+      "sample_id": 5047,
+      "predicted": -1,
+      "target": 4,
+      "correct": false,
+      "response_text": "",
+      "split": "validation"
+    },
+    {
+      "sample_id": 9356,
+      "predicted": -1,
+      "target": 7,
+      "correct": false,
+      "response_text": "",
+      "split": "validation"
+    },
+    {
+      "sample_id": 977,
+      "predicted": -1,
+      "target": 6,
+      "correct": false,
+      "response_text": "",
+      "split": "validation"
+    },
+    {
+      "sample_id": 5836,
+      "predicted": -1,
+      "target": 0,
+      "correct": false,
+      "response_text": "",
+      "split": "validation"
+    },
+    {
+      "sample_id": 106,
+      "predicted": -1,
+      "target": 1,
+      "correct": false,
+      "response_text": "",
+      "split": "validation"
+    }
+  ]
+}

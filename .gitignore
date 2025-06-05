@@ -1,0 +1,4 @@
+.env
+preprocessing/RAVEN
+__pycache__/
+preprocessing/logs/llm_calls_20250605.log
