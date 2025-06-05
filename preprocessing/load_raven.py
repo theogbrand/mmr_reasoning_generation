@@ -93,9 +93,9 @@ class RAVENRunner:
         # Load datasets
         logger.info("Loading RAVEN dataset...")
         self.datasets = {
-            'train': load_dataset("HuggingFaceM4/RAVEN", "center_single", split="train"),
-            'validation': load_dataset("HuggingFaceM4/RAVEN", "center_single", split="validation"),
-            'test': load_dataset("HuggingFaceM4/RAVEN", "center_single", split="test")
+            'train': load_dataset("HuggingFaceM4/RAVEN", "distribute_nine", split="train"),
+            'validation': load_dataset("HuggingFaceM4/RAVEN", "distribute_nine", split="validation"),
+            'test': load_dataset("HuggingFaceM4/RAVEN", "distribute_nine", split="test")
         }
         logger.info(f"Loaded datasets: {[(k, len(v)) for k, v in self.datasets.items()]}")
     
