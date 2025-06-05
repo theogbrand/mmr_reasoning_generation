@@ -424,7 +424,7 @@ class RAVENRunner:
         
         return combined
 
-    def create_raven_prompt(self, panels: List[Image.Image], choices: List[Image.Image]) -> Tuple[str, List[Image.Image]]:
+    def create_raven_prompt(self, panels: List[Image.Image], choices: List[Image.Image]) -> Tuple[str, Image.Image]:
         """
         Create visual prompt for RAVEN task with a single combined image.
         
@@ -446,29 +446,13 @@ class RAVENRunner:
         # Combine both images into a single image
         combined_image = self.create_combined_image(matrix_composite, choices_composite)
         
-        prompt = """This is a visual reasoning task. You are shown a 3x3 matrix of images with the bottom-right panel missing (marked with "?"). Your task is to identify which of the 8 numbered choices (1-8) best completes the pattern.
-
-The image shows:
-- TOP: A 3x3 matrix with 8 panels arranged as:
-  [Panel 1] [Panel 2] [Panel 3]
-  [Panel 4] [Panel 5] [Panel 6] 
-  [Panel 7] [Panel 8] [   ?   ]
-
-- BOTTOM: 8 numbered choices (1 through 8) that could complete the matrix.
-
-TASK:
-Analyze the patterns in the matrix:
-- Look for horizontal patterns (left to right across rows)
-- Look for vertical patterns (top to bottom down columns)  
-- Look for diagonal patterns
-- Consider transformations like rotation, reflection, addition/removal of elements
-- Consider relationships between shapes, colors, positions, and quantities
+        prompt = """You are shown a 3x3 matrix of images with the bottom-right panel missing (marked with "?"). Your task is to identify which of the 8 numbered choices (1-8) best completes the pattern.
 
 Select the choice (1-8) that best completes the pattern. Respond with only the number (1, 2, 3, 4, 5, 6, 7, or 8)."""
         
-        return prompt, [combined_image]
+        return prompt, combined_image
     
-    def query_azure_openai(self, prompt: str, images: List[Image.Image]) -> str:
+    def query_azure_openai(self, prompt: str, image: Image.Image) -> str:
         """
         Send visual prompt to LLM with retry logic using LiteLLM.
         
@@ -482,20 +466,13 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
         Raises:
             Exception: If all retry attempts fail
         """
-        # Convert images to base64 and create message content
-        image_messages = []
-        for img in images:
-            image_messages.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{self.encode_image_to_base64(img)}"}
-            })
-        
         messages = [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt}
-                ] + image_messages
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{self.encode_image_to_base64(image)}"}}
+                ]
             }
         ]
         
@@ -525,7 +502,7 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
                 completion_params = {
                     "model": self.model_name,
                     "messages": messages,
-                    "max_tokens": 50,  # Increased from 10 to allow proper responses
+                    "max_tokens": 10,  # Increased from 10 to allow proper responses
                 }
                 
                 # Azure OpenAI support
@@ -703,8 +680,8 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
         for i, example in enumerate(samples):
             try:
                 # Create prompt and query API
-                prompt, images = self.create_raven_prompt(example['panels'], example['choices'])
-                response = self.query_azure_openai(prompt, images)
+                prompt, image = self.create_raven_prompt(example['panels'], example['choices'])
+                response = self.query_azure_openai(prompt, image)
                 
                 # Parse response
                 predicted_idx = self.parse_response(response)
@@ -799,8 +776,8 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
             
             for example in batch_samples:
                 try:
-                    prompt, images = self.create_raven_prompt(example['panels'], example['choices'])
-                    response = self.query_azure_openai(prompt, images)
+                    prompt, image = self.create_raven_prompt(example['panels'], example['choices'])
+                    response = self.query_azure_openai(prompt, image)
                     predicted_idx = self.parse_response(response)
                     
                     predictions.append(predicted_idx)

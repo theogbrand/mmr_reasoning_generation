@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "split": "validation",
+    "total_samples": 2,
+    "model": "azure/gpt4.1",
+    "timestamp": "2025-06-05 12:28:06"
+  },
+  "metrics": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 2,
+    "invalid_responses": 2,
+    "valid_accuracy": 0
+  },
+  "detailed_results": [
+    {
+      "sample_id": 5047,
+      "predicted": -1,
+      "target": 4,
+      "correct": false,
+      "response_text": "ERROR: litellm.BadRequestError: AzureException - Unknown model: gpt4.1",
+      "split": "validation"
+    },
+    {
+      "sample_id": 9356,
+      "predicted": -1,
+      "target": 7,
+      "correct": false,
+      "response_text": "ERROR: litellm.BadRequestError: AzureException - Unknown model: gpt4.1",
+      "split": "validation"
+    }
+  ]
+}
