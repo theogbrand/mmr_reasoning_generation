@@ -138,7 +138,7 @@ class RAVENRunner:
         cell_height = panel_height + 2 * border_width
         
         # Add margin for the "Problem Matrix" text on the left side
-        left_margin = 40  # Margin for the vertical text
+        left_margin = 60  # Margin for the vertical text - increased from 40 to 60
         
         composite_width = cell_width * 3 + spacing * 2 + left_margin
         composite_height = cell_height * 3 + spacing * 2
@@ -224,7 +224,7 @@ class RAVENRunner:
             # Calculate the position for the vertical text
             # Center it vertically in the matrix area
             matrix_height = 3 * cell_height + 2 * spacing
-            text_x = 15  # Fixed distance from the left edge
+            text_x = 25  # Fixed distance from the left edge - increased from 15 to 25
             text_y = (composite_height - text_width) // 2  # Center vertically
             
             # Draw the rotated text
@@ -345,7 +345,7 @@ class RAVENRunner:
         label_margin = 15  # Space between label and content (increased)
         
         # Add margin for the left side labels
-        left_margin = 40  # Margin for the vertical text
+        left_margin = 90  # Margin for the vertical text - increased from 70 to 90 for more padding
         
         # Calculate total dimensions
         combined_width = max(matrix_width, choices_width) + 2 * margin + left_margin
@@ -401,7 +401,7 @@ class RAVENRunner:
             rotated_text = text_img.rotate(90, expand=True)
             
             # Position the rotated text on the left side, centered vertically with choices grid
-            label_x = 15
+            label_x = 35  # Increased from 25 to 35 for better spacing
             label_y = current_y + (choices_height - rotated_text.size[1]) // 2
             combined.paste(rotated_text, (label_x, label_y), rotated_text)
         
