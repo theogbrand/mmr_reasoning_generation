@@ -345,7 +345,7 @@ class RAVENRunner:
         label_margin = 15  # Space between label and content (increased)
         
         # Add margin for the left side labels
-        left_margin = 90  # Margin for the vertical text - increased from 70 to 90 for more padding
+        left_margin = 120  # Increased from 90 to 120 for more space for vertical text
         
         # Calculate total dimensions
         combined_width = max(matrix_width, choices_width) + 2 * margin + left_margin
@@ -393,17 +393,30 @@ class RAVENRunner:
             text_height = bbox[3] - bbox[1]
             
             # Create temporary image for text with transparent background
-            text_img = Image.new('RGBA', (text_width, text_height), (255, 255, 255, 0))
+            text_img = Image.new('RGBA', (text_width + 10, text_height + 10), (255, 255, 255, 0))  # Added padding
             text_draw = ImageDraw.Draw(text_img)
-            text_draw.text((0, 0), answer_set_label, fill='black', font=label_font)
+            text_draw.text((5, 5), answer_set_label, fill='black', font=label_font)  # Add some padding inside the text image
             
             # Rotate the text image 90 degrees counter-clockwise
             rotated_text = text_img.rotate(90, expand=True)
             
             # Position the rotated text on the left side, centered vertically with choices grid
-            label_x = 35  # Increased from 25 to 35 for better spacing
-            label_y = current_y + (choices_height - rotated_text.size[1]) // 2
-            combined.paste(rotated_text, (label_x, label_y), rotated_text)
+            # Ensure text is more centered and not cut off
+            label_x = 45  # Increased from 35 to 45 for better spacing
+            
+            # Calculate better vertical centering based on the actual choices area
+            # Make sure the text is fully visible within the choices section
+            choices_center_y = current_y + choices_height / 2
+            rotated_text_height = rotated_text.size[1]
+            label_y = choices_center_y - rotated_text_height / 2
+            
+            # Ensure the text doesn't go outside the image boundaries
+            if label_y < current_y:
+                label_y = current_y
+            if label_y + rotated_text_height > current_y + choices_height:
+                label_y = current_y + choices_height - rotated_text_height
+                
+            combined.paste(rotated_text, (label_x, int(label_y)), rotated_text)
         
         # Center and paste the choices
         choices_x = margin + (combined_width - choices_width - 2*margin) // 2
