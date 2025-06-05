@@ -518,9 +518,9 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
                     
                     response = client.chat.completions.create(
                         messages=messages,
-                        max_completion_tokens=1000,
+                        # max_completion_tokens=1000,
                         model="o4-mini",
-                        temperature=0.1 if not self.reasoning_effort else 1.0
+                        # temperature=0.1 if not self.reasoning_effort else 1.0
                     )
                     
                     response_content = response.choices[0].message.content
