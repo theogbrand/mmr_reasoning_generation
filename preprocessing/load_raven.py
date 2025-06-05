@@ -499,8 +499,13 @@ Select the choice (1-8) that best completes the pattern. Respond with only the n
         for attempt in range(self.max_retries):
             try:
                 # Prepare completion parameters
+                # For Azure models, we need to strip the "azure/" prefix when setting the model parameter
+                model_param = self.model_name
+                if self.model_name.startswith("azure/"):
+                    model_param = self.model_name[len("azure/"):]
+                
                 completion_params = {
-                    "model": self.model_name,
+                    "model": model_param,
                     "messages": messages,
                     "max_tokens": 10,  # Increased from 10 to allow proper responses
                 }
@@ -806,7 +811,7 @@ def main():
     """
     # Initialize evaluator with default gpt-4.1 model
     evaluator = RAVENRunner(
-        model_name="azure/gpt-4.1",  # or "vertex_ai/claude-3-7-sonnet@20250219"
+        model_name="azure/gpt-4.1",  # "azure/" prefix is important for Azure models; or use "vertex_ai/claude-3-7-sonnet@20250219" for Claude
         reasoning_effort="high"
     )
     
